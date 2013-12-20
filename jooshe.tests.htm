@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Jooshe Tests</title>
+</head>
+<body>
+<script src="jooshe.min.js"></script>
+<script>
+
+(function(){
+
+  test00();  // change the function name to the test you want to run (do one at a time)
+
+})();
+
+function test00(){
+
+  function myClass(){return undefined;}
+  myClass.prototype.sayHi = function(){ console.log("Hi!"); }
+
+  console.log(new myClass);  // myClass {sayHi: function}
+
+}
+
+function test01(){
+
+  function myClass(){return {a: "a", b: "b"};}
+  myClass.prototype.sayHi = function(){ console.log("Hi!"); }
+
+  console.log(new myClass);  // Object {a: "a", b: "b"}
+
+  (new myClass).sayHi();  // Uncaught TypeError: Object # has no method 'sayHi'
+
+}
+
+function test02(){
+
+  function myClass(){
+    var i, me = {a: "a", b: "b"};
+    for(i in this) me[i] = this[i];
+    return me;
+  }
+  myClass.prototype.sayHi = function(){ console.log("Hi!"); };
+
+  (new myClass).sayHi();  // Hi!
+
+  console.log((new myClass) instanceof myClass);  // false
+
+}
+
+function test03(){
+
+  function myClass(){
+    var i, me = document.createElement("div");
+    for(i in this) me[i] = this[i];
+    return me;
+  }
+  myClass.prototype.sayHi = function(){ console.log("Hi!"); };
+
+  (new myClass).sayHi();  // Hi!
+
+}
+
+function test04(){
+
+  function myClass(){
+    var i, me = document.createElement("input");
+    me.type = "text";
+    for(i in this) me[i] = this[i];
+    return me;
+  }
+  myClass.prototype.onkeyup = function(){ console.log(this.value); };
+
+  document.body.appendChild(new myClass).focus();  // type into the input and watch the console log
+
+}
+
+function test05(){
+
+  function myClass(){
+    var me = document.createElement("input");
+    me.type = "text";
+    me.addEventListener("keyup", this.keyupHandler);
+    return me;
+  }
+  myClass.prototype.keyupHandler = function(){ console.log(this.value); };
+
+  document.body.appendChild(new myClass).focus();
+
+}
+
+function test06(){
+
+  function myClass(){
+    var i, me = document.createElement("input");
+    me.type = "text";
+    for(i in this.listeners) me.addEventListener(i, this.listeners[i]);
+    return me;
+  }
+  myClass.prototype.listeners = {
+    keydown: function(){ console.log("down", this.value); },
+    keyup: function(){ console.log("up", this.value); }
+  };
+
+  document.body.appendChild(new myClass).focus();
+
+}
+
+function test07(){
+
+  function myClass(){
+    var i, j, me = document.createElement("input");
+    me.type = "text";
+    for(i in this)
+      if(i == "listeners") for(j in this[i]) me.addEventListener(j, this[i][j]);
+      else me[i] = this[i];
+    return me;
+  }
+  myClass.prototype.onkeyup = function(){ console.log("handle up", this.value); };
+  myClass.prototype.listeners = {
+    keydown: function(){ console.log("listen down", this.value); },
+    keyup: function(){ console.log("listen up", this.value); }
+  };
+
+  document.body.appendChild(new myClass).focus();
+
+}
+
+function test08(){
+
+  function myClass(){
+    var i, j, me = document.createElement("input");
+    me.type = "text";
+    for(i in this)
+      if(i == "listeners") for(j in this[i]) me.addEventListener(j, this[i][j]);
+      else if(i == "style") for(j in this[i]) me[i][j] = this[i][j];
+      else me[i] = this[i];
+    return me;
+  }
+  myClass.prototype.onkeyup = function(){ console.log("handle up", this.value); };
+  myClass.prototype.listeners = {
+    keydown: function(){ console.log("listen down", this.value); },
+    keyup: function(){ console.log("listen up", this.value); }
+  };
+  myClass.prototype.style = { border: "2px solid black", borderRadius: "8px", padding: "4px" };
+
+  document.body.appendChild(new myClass).focus();
+
+}
+
+function test09(){
+
+  function myClass(){
+    var i, j, me = document.createElement("input");
+    me.type = "text";
+    for(i in this)
+      if(i == "listeners") for(j in this[i]) me.addEventListener(j, this[i][j]);
+      else if(i == "style") for(j in this[i]) me[i][j] = this[i][j];
+      else if(i == "$") { me.$ = this.$; me.$.el = me; }
+      else me[i] = this[i];
+    return me;
+  }
+  myClass.prototype.onkeyup = function(){ this.$.logIt("handle up"); };
+  myClass.prototype.listeners = {
+    keydown: function(){ this.$.logIt("listen down"); },
+    keyup: function(){ this.$.logIt("listen up"); }
+  };
+  myClass.prototype.style = { border: "2px solid black", borderRadius: "8px", padding: "4px" };
+  myClass.prototype.$ = {
+    logIt: function(type){ console.log(type, this.el.value); }
+  };
+
+  document.body.appendChild(new myClass).focus();
+
+}
+
+function test10(){
+
+  createClass("myClass",
+
+    function(){ return element("input", null, this); },
+
+      {
+        onkeyup: function(){ this.$.logIt("handle up"); },
+        listeners: {
+          keydown: function(){ this.$.logIt("listen down"); },
+          keyup: function(){ this.$.logIt("listen up"); }
+        },
+        style: { border: "2px solid black", borderRadius: "8px", padding: "4px" },
+        type: "text",
+        $: { logIt: function(type){ console.log(type, this.el.value); } }
+      }
+
+    );
+
+  document.body.appendChild(new myClass).focus();
+
+}
+
+function test11(){
+
+  createClass("myClass",
+
+    function(){ return element("input", { border: "2px solid black", borderRadius: "8px", padding: "4px" }, this, null, {type: "text"}); },
+
+      {
+        onkeyup: function(){ this.$.logIt("handle up"); },
+        listeners: {
+          keydown: function(){ this.$.logIt("listen down"); },
+          keyup: function(){ this.$.logIt("listen up"); }
+        },
+        $: { logIt: function(type){ console.log(type, this.el.value); } }
+      }
+
+    );
+
+  document.body.appendChild(new myClass).focus();
+
+}
+
+function test12(){
+
+  createClass("myClass",
+
+    function(i){ return element("input", null, this, {index: i}); },
+
+      {
+        onkeyup: function(){ this.$.logIt("handle up"); },
+        listeners: {
+          keydown: function(){ this.$.logIt("listen down"); },
+          keyup: function(){ this.$.logIt("listen up"); }
+        },
+        style: { border: "2px solid black", borderRadius: "8px", padding: "4px" },
+        type: "text",
+        $: { logIt: function(type){ console.log(type, this.index, this.el.value); } }
+      }
+
+    );
+
+  for(var i=0;i<10;i++) document.body.appendChild(new myClass(i)).focus();
+
+}
+
+function test13(){
+
+  createClass("myClass", function(){ return element("input", null, this); },
+
+      {
+        style: { border: "2px solid black", borderRadius: "8px", padding: "4px" },
+        type: "text"
+      }
+
+    );
+
+  createClass("mySubClass", function(){ return element("input", null, this); }, myClass,
+
+      {
+        style: { background: "rgba(209,42,42,.1)", borderColor: "red" },
+        type: "text"
+      }
+
+    );
+
+
+  document.body.appendChild(new myClass);
+
+  document.body.appendChild(new mySubClass).focus();
+
+}
+
+function test14(){
+
+  createClass("momClass", null,
+
+      { $: { x: function(){ console.log("I'm x"); } } }
+
+    );
+
+  createClass("dadClass", null,
+
+      { $: { y: function(){ console.log("I'm y"); } } }
+
+    );
+
+  createClass("childClass", null,
+
+      {
+        $: {
+          x: momClass.prototype.$.x,
+          y: dadClass.prototype.$.y,
+          xy: function(){ console.log("I'm xy!"); }
+        }
+      }
+
+    );
+
+  var myChild = new childClass;
+  myChild.$.x();   // I'm x!
+  myChild.$.y();   // I'm y!
+  myChild.$.xy();  // I'm xy!
+
+}
+
+function test15(){
+
+  createClass("myClass",function(){ return element("div", null, this); });
+  var o = new myClass;
+  console.log(o instanceof myClass);      // false - as mentioned earlier, instanceof is broken
+  console.log(o.$.__class__ == myClass);  // true - effective workaround!</pre>
+
+}
+
+</script>
+</body>
+</html>
