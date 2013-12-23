@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Jooshe</title>
+<style>
+  body, td, input, select, textarea {font: 10pt Verdana, Arial, Helvetica, sans-serif}
+</style>
+</head>
+<body>
+<script src="jooshe.min.js"></script>
+<script src="jooshe.tables.min.js"></script>
+<script>
+
+(function(){
+
+var i, j, o, theTable = new table({borderBottom:"1px solid black"});
+for(i=0;i<10;i++) for(j=0;j<10;j++) theTable.$.cell(i,j,{padding: "5px 10px"},{innerHTML: i + "," + j});
+
+theTable.$.prependRow();
+for(i=0;i<10;i++) theTable.$.cell(0,i,{padding:"10px 0",textAlign:"center"},{innerHTML:i});
+
+o = theTable.$.lastRow();
+for(i=0;i<10;i++) o.$.cell(i,{fontWeight:"bold"});
+
+o = theTable.$.head();
+for(i=0;i<10;i++) o.$.cell(0,i,{background:"#f63",color:"#fff",fontWeight:"bold",padding:"5px 0",textAlign:"center"},{innerHTML:"ABCDEFGHIJ"[i]});
+
+for(i=0;i<10;i++) theTable.$.cell(11,i,{padding:"5px 0 10px"}).$.setImage("ball"+(i%2)+".png");
+
+for(i=0;i<10;i++){var a=[[5,5],[31,5],[57,5],[5,31],[31,31],[57,31],[5,57],[31,57],[57,57],[5,31]][i];theTable.$.cell(12,i,{padding:"5px 0 10px"}).$.setSprite("spritesheet.png",-a[0],-a[1],16,16);}
+
+var currentCell = null;
+setInterval(function(){if(currentCell)currentCell.style.background="";var i=Math.floor(Math.random()*11),j=Math.floor(Math.random()*10);currentCell=theTable.$.cell(i,j,{background:"#ffff76"});},1000);
+
+document.body.appendChild(theTable);
+
+})();
+
+// A better way to handle the flashing cells is to encapsulate the functionality in a custom Jooshe class:
+
+(function(){
+
+var i, j, theTable = new table({marginTop:"40px"});
+
+createClass("flashyCell",function(i,j){return new td({padding:"5px 10px"},this,null,{innerHTML: i + "," + j});},{
+$:{flashNext:function(){
+  this.el.style.background = "";
+  var i = Math.floor(Math.random()*10), j = Math.floor(Math.random()*10), nextCell = theTable.$.cell(i,j,{background:"#ffff76"});
+  setTimeout(function(){nextCell.$.flashNext();},1000);}
+}});
+
+for(i=0;i<10;i++) for(j=0;j<10;j++) theTable.$.cell(i,j,new flashyCell(i,j));
+
+document.body.appendChild(theTable);
+
+theTable.$.cell(0,0).$.flashNext();
+
+})();
+
+</script>
+</body>
+</html>
